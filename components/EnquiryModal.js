@@ -428,36 +428,18 @@ function PS5RentalForm({ onClose }) {
     <div className="flex flex-col h-full max-h-full">
       <div className="flex-shrink-0">
         <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
-        {/* Show saved data indicator */}
-        {(loadFromLocalStorage(FORM_DATA_KEY) ||
-          loadFromLocalStorage(CURRENT_STEP_KEY) > 1) && (
-          <div className="text-center py-2">
-            <p className="text-xs text-blue-400">
-              📄 Previous form data restored
-            </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="text-xs text-gray-400 hover:text-white"
-            >
-              Start Fresh
-            </Button>
-          </div>
-        )}
       </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col h-full min-h-0"
         >
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto px-1 py-2 md:py-4 min-h-0">
-            <div className="space-y-3 md:space-y-6">{renderStep()}</div>
+          {/* Scrollable content area - reduced padding on mobile */}
+          <div className="flex-1 overflow-y-auto px-1 py-1 md:py-4 min-h-0">
+            <div className="space-y-2 md:space-y-6">{renderStep()}</div>
           </div>
-          {/* Fixed navigation buttons at bottom */}
-          <div className="flex-shrink-0 border-t border-gray-700 bg-gray-900 p-3 md:p-4 -mx-1">
+          {/* Fixed navigation buttons at bottom - reduced padding on mobile */}
+          <div className="flex-shrink-0 border-t border-gray-700 bg-gray-900 p-2 md:p-4 -mx-1">
             <NavigationButtons
               currentStep={currentStep}
               totalSteps={totalSteps}
@@ -509,23 +491,19 @@ export default function PS5InquiryModal({ triggerButton }) {
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{triggerElement}</DrawerTrigger>
       <DrawerContent className="bg-gray-900 border-gray-800 text-white h-[95vh] flex flex-col">
-        <DrawerHeader className="text-left flex-shrink-0 px-4 py-3">
-          <DrawerTitle className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+        <DrawerHeader className="text-left flex-shrink-0 px-4 py-2">
+          <DrawerTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
             Book Your PS5 Experience
           </DrawerTitle>
-          <DrawerDescription className="text-gray-400 text-sm md:text-base">
-            {`Fill in the details and we'll get back to you with a customized`}
-            quote
-          </DrawerDescription>
         </DrawerHeader>
-        <div className="flex-1 px-3 md:px-4 min-h-0">
+        <div className="flex-1 px-3 min-h-0">
           <PS5RentalForm onClose={() => setOpen(false)} />
         </div>
-        <DrawerFooter className="flex-shrink-0 px-4 py-3">
+        <DrawerFooter className="flex-shrink-0 px-4 py-2">
           <DrawerClose asChild>
             <Button
               variant="outline"
-              className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 text-sm py-2"
+              className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 text-sm h-8"
             >
               Cancel
             </Button>

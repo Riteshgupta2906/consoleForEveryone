@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, X, Cloud, Sun, Moon } from "lucide-react";
+import { Calendar, Clock, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,41 +20,173 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
-// --- REUSABLE DATE PICKER COMPONENT ---
-export function DatePicker({
-  field,
-  placeholder = "Pick a date",
+// --- CUSTOM DATE RANGE PICKER COMPONENT ---
+export function DateRangePicker({
+  startField,
+  endField,
+  placeholder = "Pick date range",
   disabled,
   showClearButton = false,
   onClear,
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const formatDateRange = () => {
+    if (startField.value && endField.value) {
+      return `${format(startField.value, "MMM d")} - ${format(
+        endField.value,
+        "MMM d, yyyy"
+      )}`;
+    } else if (startField.value) {
+      return `${format(startField.value, "MMM d, yyyy")} - Select end date`;
+    }
+    return placeholder;
+  };
+
+  const handleDateClick = (date) => {
+    if (disabled && disabled(date)) return;
+
+    if (!startField.value) {
+      // First selection - set start date
+      startField.onChange(date);
+      endField.onChange(null);
+    } else if (!endField.value) {
+      // Second selection - set end date
+      if (date >= startField.value) {
+        endField.onChange(date);
+        // Keep calendar open briefly to show selection, then close
+        setTimeout(() => setIsOpen(false), 300);
+      } else {
+        // If earlier date selected, make it new start
+        startField.onChange(date);
+        endField.onChange(null);
+      }
+    } else {
+      // Both selected, start over
+      startField.onChange(date);
+      endField.onChange(null);
+    }
+  };
+
+  const isInRange = (date) => {
+    if (!startField.value || !endField.value) return false;
+    const dateTime = date.getTime();
+    const startTime = startField.value.getTime();
+    const endTime = endField.value.getTime();
+    return dateTime >= startTime && dateTime <= endTime;
+  };
+
+  const isStartDate = (date) => {
+    return startField.value && date.getTime() === startField.value.getTime();
+  };
+
+  const isEndDate = (date) => {
+    return endField.value && date.getTime() === endField.value.getTime();
+  };
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const navigateMonth = (direction) => {
+    setCurrentDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + direction);
+      return newDate;
+    });
+  };
+
+  const renderCalendarGrid = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+
+    const days = [];
+
+    // Empty cells for previous month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10 w-10"></div>);
+    }
+
+    // Days of current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const isDisabled = disabled && disabled(date);
+      const inRange = isInRange(date);
+      const isStart = isStartDate(date);
+      const isEnd = isEndDate(date);
+      const isSameDay = isStart && isEnd;
+
+      let cellClass =
+        "h-10 w-10 flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 relative select-none ";
+
+      if (isDisabled) {
+        cellClass += "text-gray-500 cursor-not-allowed opacity-50 ";
+      } else if (inRange) {
+        cellClass += "text-white ";
+        if (isSameDay) {
+          cellClass +=
+            "rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg ";
+        } else if (isStart) {
+          cellClass +=
+            "rounded-l-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg ";
+        } else if (isEnd) {
+          cellClass +=
+            "rounded-r-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg ";
+        } else {
+          cellClass += "bg-gradient-to-br from-blue-500 to-blue-600 ";
+        }
+      } else if (isStart && !endField.value) {
+        // Mark the first selected date when no end date is selected
+        cellClass +=
+          "text-white rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg ring-2 ring-blue-300 ";
+      } else {
+        cellClass += "text-white hover:bg-gray-700 rounded-lg hover:scale-105 ";
+      }
+
+      days.push(
+        <button
+          key={day}
+          type="button"
+          className={cellClass}
+          onClick={() => handleDateClick(date)}
+          disabled={isDisabled}
+        >
+          {day}
+        </button>
+      );
+    }
+
+    return days;
+  };
+
   return (
-    <Popover modal={true}>
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
       <PopoverTrigger asChild>
         <FormControl>
           <Button
+            type="button"
             variant="outline"
             className={cn(
               "w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700 justify-start text-left font-normal h-9 md:h-10 text-sm md:text-base",
-              !field.value && "text-gray-400"
+              !startField.value && "text-gray-400"
             )}
           >
-            <CalendarIcon className="mr-1.5 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-            {field.value ? (
-              <span className="flex-1 truncate">
-                {format(field.value, "MMM d, yyyy")}
-              </span>
-            ) : (
-              <span className="flex-1">{placeholder}</span>
-            )}
-            {showClearButton && field.value && (
+            <Calendar className="mr-1.5 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span className="flex-1 truncate">{formatDateRange()}</span>
+            {showClearButton && (startField.value || endField.value) && (
               <X
                 className="ml-1 md:ml-2 h-3.5 w-3.5 md:h-4 md:w-4 hover:text-red-400 cursor-pointer flex-shrink-0"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   onClear?.();
                 }}
@@ -63,109 +196,92 @@ export function DatePicker({
         </FormControl>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 md:p-1 bg-gray-800 border-gray-700"
+        className="w-auto p-0 bg-gray-800 border-gray-700 shadow-2xl"
         align="start"
         sideOffset={4}
-        style={{ zIndex: 9999 }}
+        style={{ zIndex: 50 }}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Calendar
-          mode="single"
-          selected={field.value}
-          onSelect={field.onChange}
-          disabled={disabled}
-          initialFocus
-          className="bg-gray-800 text-white border-gray-700 scale-90 md:scale-90 p-2 md:p-3"
-        />
+        {/* Header with Navigation */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateMonth(-1)}
+            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <h3 className="text-white font-medium">
+            {format(currentDate, "MMMM yyyy")}
+          </h3>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateMonth(1)}
+            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Clear Button */}
+        {(startField.value || endField.value) && (
+          <div className="px-4 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                startField.onChange(null);
+                endField.onChange(null);
+              }}
+              className="h-7 px-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Clear Selection
+            </Button>
+          </div>
+        )}
+
+        {/* Calendar */}
+        <div className="p-4">
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+              <div
+                key={day}
+                className="h-8 flex items-center justify-center text-xs font-medium text-gray-400"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1">{renderCalendarGrid()}</div>
+        </div>
+
+        {/* Footer */}
+        {startField.value && (
+          <div className="p-3 border-t border-gray-700 text-xs text-gray-400">
+            {endField.value
+              ? `Selected: ${format(startField.value, "MMM d")} - ${format(
+                  endField.value,
+                  "MMM d, yyyy"
+                )}`
+              : `Start: ${format(
+                  startField.value,
+                  "MMM d, yyyy"
+                )} - Click to select end date`}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
-  );
-}
-
-// --- NEW COMPACT HOUR SLIDER COMPONENT ---
-export function HourSlider({ field }) {
-  // Service hours: 7 AM (7) to 9 PM (21)
-  const MIN_HOUR = 7;
-  const MAX_HOUR = 21;
-
-  // Convert time string to hour number (7-21)
-  const timeToHour = (timeString) => {
-    if (!timeString) return 12; // Default to noon
-    const hour = parseInt(timeString.split(":")[0], 10);
-    return Math.max(MIN_HOUR, Math.min(MAX_HOUR, hour));
-  };
-
-  // Convert hour number to time string
-  const hourToTime = (hour) => {
-    return `${hour.toString().padStart(2, "0")}:00`;
-  };
-
-  // Format hour for display
-  const formatHour = (hour) => {
-    if (hour === 12) return "12 PM";
-    if (hour < 12) return `${hour} AM`;
-    return `${hour - 12} PM`;
-  };
-
-  // Get time period and icon
-  const getTimePeriodInfo = (hour) => {
-    if (hour >= 7 && hour < 12) {
-      return { period: "morning", icon: Cloud, color: "text-blue-400" };
-    }
-    if (hour >= 12 && hour < 18) {
-      return { period: "afternoon", icon: Sun, color: "text-yellow-400" };
-    }
-    return { period: "evening", icon: Moon, color: "text-indigo-400" };
-  };
-
-  const currentHour = timeToHour(field.value);
-  const { icon: Icon, color } = getTimePeriodInfo(currentHour);
-
-  const handleSliderChange = (value) => {
-    const hour = value[0];
-    field.onChange(hourToTime(hour));
-  };
-
-  return (
-    <div className="px-3 py-3 bg-gray-800 border border-gray-700 rounded-md">
-      {/* Compact Time Display */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <Icon className={cn("h-4 w-4", color)} />
-          <span className="text-sm font-medium text-white">
-            {formatHour(currentHour)}
-          </span>
-        </div>
-        <div className="text-xs text-gray-400">Service: 7AM - 9PM</div>
-      </div>
-
-      {/* Compact Slider */}
-      <div className="space-y-2">
-        <Slider
-          value={[currentHour]}
-          onValueChange={handleSliderChange}
-          max={MAX_HOUR}
-          min={MIN_HOUR}
-          step={1}
-          className="w-full"
-        />
-
-        {/* Compact Time markers with icons */}
-        <div className="flex justify-between items-center text-xs">
-          <div className="flex items-center space-x-1">
-            <Cloud className="h-3 w-3 text-blue-400" />
-            <span className="text-gray-500">7AM</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Sun className="h-3 w-3 text-yellow-400" />
-            <span className="text-gray-500">12PM</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Moon className="h-3 w-3 text-indigo-400" />
-            <span className="text-gray-500">9PM</span>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -178,44 +294,22 @@ export function AddressTimeStep({ form }) {
     return date < today;
   };
 
-  const isEndDateDisabled = (date) => {
-    const startDate = form.getValues("startDate");
-    if (!startDate) return isDateDisabled(date);
-    const startOfDay = new Date(startDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    return date < startOfDay;
-  };
-
   // Helper function to calculate the total rental duration
   const calculateDuration = () => {
     const startDate = form.getValues("startDate");
     const endDate = form.getValues("endDate");
-    const startTime = form.getValues("startTime");
-    const endTime = form.getValues("endTime");
 
-    if (startDate && endDate && startTime && endTime) {
-      const startDateTime = new Date(
-        `${format(startDate, "yyyy-MM-dd")}T${startTime}`
-      );
-      const endDateTime = new Date(
-        `${format(endDate, "yyyy-MM-dd")}T${endTime}`
-      );
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
 
-      if (endDateTime <= startDateTime) return "Invalid selection";
+      if (end <= start) return "Invalid selection";
 
-      const diffMs = endDateTime - startDateTime;
+      const diffMs = end - start;
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const diffHours = Math.floor(
-        (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
 
-      let durationString = "";
-      if (diffDays > 0)
-        durationString += `${diffDays} day${diffDays > 1 ? "s" : ""} `;
-      if (diffHours > 0)
-        durationString += `${diffHours} hour${diffHours > 1 ? "s" : ""} `;
-
-      return durationString.trim() || "Less than an hour";
+      if (diffDays === 0) return "Same day rental";
+      return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
     }
     return null;
   };
@@ -343,111 +437,76 @@ export function AddressTimeStep({ form }) {
             )}
           />
         </div>
-
-        {/* Display Complete Address Preview */}
-        {/* {(form.watch("houseNumber") ||
-          form.watch("buildingName") ||
-          form.watch("streetName") ||
-          form.watch("pinCode") ||
-          form.watch("city")) && (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-            <FormLabel className="text-gray-300 text-xs md:text-sm font-medium">
-              Complete Address Preview:
-            </FormLabel>
-            <p className="text-gray-200 text-sm mt-1">
-              {[
-                form.watch("houseNumber"),
-                form.watch("buildingName"),
-                form.watch("streetName"),
-                form.watch("city"),
-                form.watch("pinCode"),
-              ]
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-          </div>
-        )} */}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        {/* Start Date/Time */}
-        <div className="space-y-3 md:space-y-4">
-          <h4 className="text-sm md:text-md font-medium text-white">
-            Rental Start
-          </h4>
+      {/* Date Range Selection */}
+      <div className="space-y-4">
+        <h4 className="text-sm md:text-base font-medium text-white">
+          Rental Period
+        </h4>
+
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
             name="startDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300 text-sm md:text-base">
-                  Start Date *
-                </FormLabel>
-                <DatePicker
-                  field={field}
-                  placeholder="Pick start date"
-                  disabled={isDateDisabled}
-                  showClearButton={true}
-                  onClear={() => {
-                    form.setValue("startDate", undefined);
-                    form.setValue("endDate", undefined);
-                  }}
-                />
-                <FormMessage className="text-red-400 text-xs md:text-sm" />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300 text-sm md:text-base">
-                  Start Time *
-                </FormLabel>
-                <HourSlider field={field} />
-                <FormMessage className="text-red-400 text-xs md:text-sm" />
-              </FormItem>
+            render={({ field: startField }) => (
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field: endField }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-sm md:text-base">
+                      Select Date Range *
+                    </FormLabel>
+                    <DateRangePicker
+                      startField={startField}
+                      endField={endField}
+                      placeholder="Pick start and end dates"
+                      disabled={isDateDisabled}
+                      showClearButton={true}
+                      onClear={() => {
+                        form.setValue("startDate", null);
+                        form.setValue("endDate", null);
+                        form.setValue("startTime", null);
+                        form.setValue("endTime", null);
+                      }}
+                    />
+
+                    <FormMessage className="text-red-400 text-xs md:text-sm" />
+                  </FormItem>
+                )}
+              />
             )}
           />
         </div>
 
-        {/* End Date/Time */}
-        <div className="space-y-3 md:space-y-4">
-          <h4 className="text-sm md:text-md font-medium text-white">
-            Rental End
-          </h4>
+        {/* Hidden time fields with default values */}
+        <div className="hidden">
           <FormField
             control={form.control}
-            name="endDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300 text-sm md:text-base">
-                  End Date *
-                </FormLabel>
-                <DatePicker
-                  field={field}
-                  placeholder="Pick end date"
-                  disabled={isEndDateDisabled}
-                  showClearButton={true}
-                  onClear={() => form.setValue("endDate", undefined)}
-                />
-                <FormMessage className="text-red-400 text-xs md:text-sm" />
-              </FormItem>
-            )}
+            name="startTime"
+            render={({ field }) => {
+              // Set default time when start date is selected
+              if (form.getValues("startDate") && !field.value) {
+                field.onChange("08:00");
+              }
+              return (
+                <input type="hidden" {...field} value={field.value || ""} />
+              );
+            }}
           />
           <FormField
             control={form.control}
             name="endTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300 text-sm md:text-base">
-                  End Time *
-                </FormLabel>
-                <HourSlider field={field} />
-                <FormMessage className="text-red-400 text-xs md:text-sm" />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Set default time when end date is selected
+              if (form.getValues("endDate") && !field.value) {
+                field.onChange("08:00");
+              }
+              return (
+                <input type="hidden" {...field} value={field.value || ""} />
+              );
+            }}
           />
         </div>
       </div>

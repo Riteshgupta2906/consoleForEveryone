@@ -2,15 +2,15 @@ export function ProgressBar({ currentStep, totalSteps }) {
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="mb-3 md:mb-6 space-y-1.5 md:space-y-2">
-      <div className="flex justify-between text-xs md:text-sm text-gray-400">
+    <div className="mb-2 md:mb-6 space-y-1 md:space-y-2">
+      {/* <div className="flex justify-between text-xs text-gray-400">
         <span>
           Step {currentStep} of {totalSteps}
         </span>
         <span>{Math.round(progress)}% Complete</span>
-      </div>
+      </div> */}
       <div className="relative">
-        <div className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-1.5 md:h-3 bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-300 ease-out rounded-full"
             style={{ width: `${progress}%` }}
