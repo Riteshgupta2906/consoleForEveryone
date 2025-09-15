@@ -168,7 +168,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../..",
@@ -178,6 +178,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -186,8 +187,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client1\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel RentalInquiry {\n  id        Int      @id @default(autoincrement())\n  createdAt DateTime @default(now())\n\n  // Personal Information\n  name  String\n  email String\n  phone String\n\n  // Game Selection\n  selectedGames       String[] // Array of game names\n  customGames         String?\n  numberOfControllers Int\n\n  // Address as JSON\n  address Json\n\n  // Rental Period\n  startDate DateTime\n  startTime String\n  endDate   DateTime\n  endTime   String\n\n  // Additional\n  message String?\n  status  String  @default(\"PENDING\")\n}\n",
-  "inlineSchemaHash": "8859d6eebb9bb5638a00745709d457da023fb55277bc3e8f7ad36639001b7073",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/client1\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel RentalInquiry {\n  id                  Int      @id @default(autoincrement())\n  createdAt           DateTime @default(now())\n  name                String\n  email               String\n  phone               String\n  selectedGames       String[]\n  customGames         String?\n  numberOfControllers Int\n  address             Json\n  startDate           DateTime\n  startTime           String\n  endDate             DateTime\n  endTime             String\n  message             String?\n  status              String   @default(\"PENDING\")\n}\n",
+  "inlineSchemaHash": "c2aacdddc15474c655146a2df9938676d59ed4711266af301b5c878612be1295",
   "copyEngine": true
 }
 config.dirname = '/'
