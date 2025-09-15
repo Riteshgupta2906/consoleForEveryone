@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client1"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model RentalInquiry {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // Personal Information
+  name  String
+  email String
+  phone String
+
+  // Game Selection
+  selectedGames       String[] // Array of game names
+  customGames         String?
+  numberOfControllers Int
+
+  // Address as JSON
+  address Json
+
+  // Rental Period
+  startDate DateTime
+  startTime String
+  endDate   DateTime
+  endTime   String
+
+  // Additional
+  message String?
+  status  String  @default("PENDING")
+}
