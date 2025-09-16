@@ -362,7 +362,9 @@ function PS5RentalForm({ onClose }) {
         body: JSON.stringify(submissionData),
       });
       const result = await response.json();
-      console.log("Server response:", result);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Server response:", result);
+      }
 
       if (!response.ok) {
         throw new Error("Failed to submit inquiry");

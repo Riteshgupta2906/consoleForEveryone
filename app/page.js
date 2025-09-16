@@ -11,6 +11,10 @@ import {
   Home,
   Coffee,
   Briefcase,
+  Monitor,
+  Star,
+  Calendar,
+  ArrowRight,
 } from "lucide-react";
 import Testimonials from "@/components/testimonials";
 import MainPage from "@/components/MainPage";
@@ -175,7 +179,6 @@ export default function Component() {
             </div>
           </div>
         </section>
-
         {/* Pricing Section with mobile optimization */}
         <section id="pricing" className="py-16 lg:py-24">
           <div className="container mx-auto px-6 lg:px-8">
@@ -268,9 +271,42 @@ export default function Component() {
             </motion.div>
           </div>
         </section>
+        <section className="py-12 lg:py-16">
+          <div className="container mx-auto px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 via-blue-900/80 to-black/80 border border-blue-500/30"
+            >
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-black/20"></div>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]"></div>
 
-        {/* Bottom spacer */}
-        <div className="py-10 lg:py-16"></div>
+              {/* Full Width Video */}
+              <div className="relative w-full">
+                <video
+                  className="w-full h-[300px] sm:h-[350px] md:h-[400px] lg:h-[600px] object-cover rounded-2xl"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                >
+                  <source src="/projector.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+
+                {/* Optional overlay for better text readability if needed */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-2xl"></div>
+
+                {/* Floating decorative elements */}
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full opacity-30 animate-pulse"></div>
+                <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full opacity-20 animate-pulse delay-1000"></div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </div>
     </div>
   );
